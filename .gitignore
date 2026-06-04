@@ -1,0 +1,12 @@
+node_modules/
+dist-electron/
+ketcher/node_modules/
+ketcher/packages/*/node_modules/
+ketcher/packages/*/dist/
+ketcher/example/node_modules/
+ketcher/example/dist/
+ketcher/demo/node_modules/
+ketcher/demo/dist/
+.DS_Store
+*.log
+.claude/

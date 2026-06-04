@@ -1,0 +1,63 @@
+{
+  "name": "ketcher-desktop",
+  "version": "1.0.0",
+  "description": "Ketcher chemical structure editor — desktop app",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:ketcher": "bash scripts/build-ketcher.sh",
+    "build": "npm run build:ketcher && electron-builder",
+    "dist": "npm run build:ketcher && electron-builder --publish never",
+    "pack": "npm run build:ketcher && electron-builder --dir",
+    "update-ketcher": "bash scripts/update-ketcher.sh"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.ketcher.desktop",
+    "productName": "Ketcher Desktop",
+    "copyright": "EPAM Systems (Ketcher) — Electron wrapper",
+    "asar": true,
+    "asarUnpack": [
+      "**/*.wasm",
+      "**/*.node"
+    ],
+    "files": [
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "ketcher/example/dist",
+        "to": "ketcher-dist",
+        "filter": ["**/*"]
+      }
+    ],
+    "directories": {
+      "output": "dist-electron"
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "category": "Science"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

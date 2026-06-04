@@ -1,0 +1,3 @@
+[submodule "ketcher"]
+	path = ketcher
+	url = https://github.com/epam/ketcher

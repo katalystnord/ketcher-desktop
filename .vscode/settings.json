@@ -1,0 +1,36 @@
+{
+  // Git — show ketcher submodule as a separate repo in the Source Control panel
+  "git.detectSubmodules": true,
+  "git.detectSubmodulesLimit": 10,
+
+  // Hide generated/dependency directories from the Explorer sidebar
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist-electron": true,
+    "ketcher/example/dist": true,
+    "ketcher/packages/*/dist": true
+  },
+
+  // Exclude heavy directories from file search (Ctrl+P / Ctrl+Shift+F)
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist-electron": true,
+    "ketcher/example/dist": true,
+    "ketcher/packages/*/dist": true,
+    "ketcher/demo/dist": true
+  },
+
+  // Stop the file watcher from thrashing on build output and node_modules
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist-electron/**": true,
+    "ketcher/example/dist/**": true,
+    "ketcher/packages/*/dist/**": true
+  },
+
+  // JS/JSON formatting
+  "editor.formatOnSave": true,
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]":        { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]":       { "editor.defaultFormatter": "esbenp.prettier-vscode" }
+}

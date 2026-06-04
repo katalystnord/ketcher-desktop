@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    // JavaScript debugging (built-in, but listing it ensures it's enabled)
+    "ms-vscode.js-debug",
+    // Git history graph — very useful when managing the ketcher submodule
+    "mhutchie.git-graph",
+    // Enhanced git blame, history, and lens annotations
+    "eamodio.gitlens",
+    // Linting
+    "dbaeumer.vscode-eslint",
+    // Formatting
+    "esbenp.prettier-vscode"
+  ]
+}

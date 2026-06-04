@@ -1,0 +1,16 @@
+# Normalize line endings on commit; check out as-is on all platforms
+* text=auto eol=lf
+
+# Shell scripts must always be LF (will break if CRLF on Linux/macOS)
+*.sh text eol=lf
+
+# Windows batch files get CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binaries — do not touch
+*.wasm binary
+*.node binary
+*.png  binary
+*.jpg  binary
+*.ico  binary

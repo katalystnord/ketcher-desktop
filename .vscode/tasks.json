@@ -1,0 +1,48 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Ketcher",
+      "type": "shell",
+      "command": "npm run build:ketcher",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      // Silent pre-launch guard: fails with a clear message if Ketcher hasn't
+      // been built yet, rather than silently launching a blank window.
+      "label": "Check Ketcher build",
+      "type": "shell",
+      "command": "test -f ketcher/example/dist/index.html",
+      "windows": {
+        "command": "if not exist ketcher\\example\\dist\\index.html exit 1"
+      },
+      "presentation": { "reveal": "silent", "panel": "shared" },
+      "problemMatcher": {
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^$",
+          "endsPattern": "^$"
+        }
+      },
+      "detail": "Fails if ketcher/example/dist/ doesn't exist — run 'Build Ketcher' first (Ctrl+Shift+B)"
+    },
+    {
+      "label": "Update Ketcher (pull upstream)",
+      "type": "shell",
+      "command": "npm run update-ketcher",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

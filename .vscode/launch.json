@@ -1,0 +1,63 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Debug only the Electron main process (electron/main.js + preload.js).
+      // Breakpoints in those files work immediately.
+      "name": "Main Process",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "args": ["."],
+      "outputCapture": "std",
+      "env": { "NODE_ENV": "development" },
+      "skipFiles": ["<node_internals>/**"],
+      "preLaunchTask": "Check Ketcher build"
+    },
+    {
+      // Launch Electron AND open a Chrome DevTools connection to the renderer.
+      // Run this config; VS Code starts both and you get breakpoints everywhere.
+      "name": "Main + Renderer (Full Debug)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "args": [".", "--remote-debugging-port=9222"],
+      "outputCapture": "std",
+      "env": { "NODE_ENV": "development" },
+      "skipFiles": ["<node_internals>/**"],
+      "preLaunchTask": "Check Ketcher build"
+    },
+    {
+      // Attach to the Ketcher renderer after "Main + Renderer" is already running.
+      // Use this in the compound below, or manually when the app is open.
+      "name": "Attach Renderer",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/ketcher/example",
+      "urlFilter": "app://localhost/*",
+      "timeout": 30000,
+      "sourceMapPathOverrides": {
+        "webpack:///./src/*": "${webRoot}/src/*",
+        "webpack:///src/*": "${webRoot}/src/*"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      // One-click full debug: launches Electron + attaches the renderer debugger.
+      // Requires Ketcher to be built first (npm run build:ketcher).
+      "name": "Electron: Full Debug",
+      "configurations": ["Main + Renderer (Full Debug)", "Attach Renderer"],
+      "stopAll": true
+    }
+  ]
+}

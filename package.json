@@ -60,7 +60,17 @@
           ]
         }
       ],
-      "category": "Science"
+      "category": "Science",
+      "extraFiles": [
+        {
+          "from": "build/com.ketcher.desktop.metainfo.xml",
+          "to": "usr/share/metainfo/com.ketcher.desktop.metainfo.xml"
+        }
+      ]
+    },
+    "deb": {
+      "afterInstall": "scripts/deb-after-install.sh",
+      "afterRemove": "scripts/deb-after-remove.sh"
     },
     "win": {
       "target": [

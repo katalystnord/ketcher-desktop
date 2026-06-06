@@ -1,6 +1,13 @@
-const { app, BrowserWindow, protocol, net, shell } = require('electron')
+const { app, BrowserWindow, Menu, protocol, net, shell } = require('electron')
 const path = require('path')
 const url = require('url')
+
+// Must be called before app is ready — makes app:// behave like https://
+// (standard URL resolution, secure context, WASM allowed, fetch API).
+protocol.registerSchemesAsPrivileged([{
+  scheme: 'app',
+  privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true },
+}])
 
 // In packaged app, Ketcher's built SPA lives in extraResources/ketcher-dist.
 // In dev, it lives at ketcher/example/dist relative to project root.
@@ -40,7 +47,8 @@ function createWindow() {
     },
   })
 
-  win.loadURL('app://localhost/index.html')
+  // standalone mode: self-contained WASM build, no remote server needed
+  win.loadURL('app://localhost/standalone/index.html')
 
   // Open external links in the system browser instead of a new Electron window.
   win.webContents.setWindowOpenHandler(({ url: href }) => {
@@ -52,6 +60,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null)
   registerAppProtocol()
   createWindow()
 

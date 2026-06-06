@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, protocol, net, shell } = require('electron')
+const { app, BrowserWindow, Menu, protocol, net, shell, dialog } = require('electron')
 const path = require('path')
 const url = require('url')
 
@@ -56,6 +56,45 @@ function createWindow() {
       shell.openExternal(href)
     }
     return { action: 'deny' }
+  })
+
+  // Prompt before closing if the canvas has content.
+  win.on('close', async (e) => {
+    e.preventDefault()
+
+    let hasContent = false
+    try {
+      hasContent = await win.webContents.executeJavaScript(`
+        (async () => {
+          try {
+            if (!window.ketcher) return false
+            const smiles = await window.ketcher.getSmiles()
+            return typeof smiles === 'string' && smiles.trim() !== ''
+          } catch (_) {
+            return false
+          }
+        })()
+      `)
+    } catch (_) {
+      // Page not loaded or renderer crashed — allow close
+    }
+
+    if (!hasContent) {
+      win.destroy()
+      return
+    }
+
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'question',
+      buttons: ['Close anyway', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+      title: 'Unsaved changes',
+      message: 'The editor has unsaved changes.',
+      detail: 'Close without saving?',
+    })
+
+    if (response === 0) win.destroy()
   })
 }
 

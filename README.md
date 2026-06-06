@@ -4,6 +4,8 @@ A native desktop application wrapping [Ketcher](https://github.com/epam/ketcher)
 
 Ketcher Desktop runs entirely offline. It uses Ketcher's standalone (WASM-based) build, so no backend server is required.
 
+![Ketcher Desktop main window](docs/screenshot.png)
+
 ---
 
 ## Features

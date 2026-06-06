@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const APP_DIR = path.resolve(__dirname, '../../..');
+const APP_DIR = path.resolve(__dirname, '..');
 const SHOT_DIR = process.env.SCREENSHOT_DIR || '/tmp/shots';
 fs.mkdirSync(SHOT_DIR, { recursive: true });
 

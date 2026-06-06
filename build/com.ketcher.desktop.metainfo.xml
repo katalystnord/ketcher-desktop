@@ -54,14 +54,12 @@
     <category>Education</category>
   </categories>
 
-  <!-- Add at least one screenshot before submitting to a software centre:
   <screenshots>
     <screenshot type="default">
       <caption>Ketcher Desktop — main editor window</caption>
       <image>https://raw.githubusercontent.com/YOUR_ORG/ketcher-desktop/master/docs/screenshot.png</image>
     </screenshot>
   </screenshots>
-  -->
 
   <content_rating type="oars-1.1" />
 

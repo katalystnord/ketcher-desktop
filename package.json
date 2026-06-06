@@ -1,6 +1,6 @@
 {
   "name": "ketcher-desktop",
-  "version": "1.0.0",
+  "version": "3.17.0-rc.1",
   "description": "Ketcher chemical structure editor — desktop app",
   "homepage": "https://github.com/epam/ketcher",
   "author": {
@@ -14,7 +14,8 @@
     "build": "npm run build:ketcher && electron-builder",
     "dist": "npm run build:ketcher && electron-builder --publish never",
     "pack": "npm run build:ketcher && electron-builder --dir",
-    "update-ketcher": "bash scripts/update-ketcher.sh"
+    "update-ketcher": "bash scripts/update-ketcher.sh",
+    "sync-version": "node -e \"const v=require('./ketcher/packages/ketcher-react/package.json').version; require('child_process').execSync('npm pkg set version='+v,{stdio:'inherit'}); console.log('→ Version synced to '+v);\""
   },
   "devDependencies": {
     "electron": "^35.0.0",

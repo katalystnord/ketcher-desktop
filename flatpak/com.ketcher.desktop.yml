@@ -64,8 +64,8 @@ modules:
       # 1. Desktop app source
       # - type: git
       #   url: https://github.com/katalystnord/ketcher-desktop
-      #   tag: vX.Y.Z
-      #   commit: <git rev-parse HEAD>
+      #   tag: v3.17.0-rc.1
+      #   commit: b1d03ec712f58875f66b3a962266cf4d4afa4341
       #
       # 2. Ketcher source (for audit — dist is pre-built, see below)
       # - type: git
@@ -73,11 +73,10 @@ modules:
       #   dest: ketcher
       #   commit: 4d25340d33d3b59bb216916f9db067fc69b9ea3f
       #
-      # 3. Pre-built Ketcher SPA (tar -czf ketcher-dist.tar.gz ketcher/example/dist)
-      #    Upload this as a release asset; fill in the sha256 with sha256sum.
+      # 3. Pre-built Ketcher SPA built from the Ketcher commit above
       # - type: archive
-      #   url: https://github.com/katalystnord/ketcher-desktop/releases/download/vX.Y.Z/ketcher-dist.tar.gz
-      #   sha256: <sha256sum ketcher-dist.tar.gz>
+      #   url: https://github.com/katalystnord/ketcher-desktop/releases/download/v3.17.0-rc.1/ketcher-dist.tar.gz
+      #   sha256: 0a05a8cb5767dd956cca7c62c27e3f395391faac40d507022eb240858725e2fa
       #   dest: ketcher/example
 
       # ── Generated npm sources (root package only) ─────────────────────────

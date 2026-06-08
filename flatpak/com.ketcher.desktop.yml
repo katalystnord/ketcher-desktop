@@ -29,32 +29,14 @@ modules:
         npm_config_offline: 'true'
 
     build-commands:
-      # ── Root dependencies ────────────────────────────────────────────────
+      # ── Root dependencies (offline, sources pre-fetched) ─────────────────
       - npm install --offline
 
-      # ── Ketcher submodule dependencies ───────────────────────────────────
-      - npm --prefix ketcher install --offline --legacy-peer-deps
-      - npm --prefix ketcher install react-refresh --offline --legacy-peer-deps
-
-      # ── Build Ketcher packages ───────────────────────────────────────────
-      - npm --prefix ketcher run build:packages
-
-      # ── ButtonsConfig shim ───────────────────────────────────────────────
-      # rollup-plugin-typescript2 skips emitting this file due to upstream TS
-      # errors; patch it so ButtonsConfig is re-exported correctly.
-      - |
-        {
-          echo "export type { Config, ButtonsConfig } from './builders/ketcher';"
-          echo "export * from './providers';"
-          echo "export * from './ui/views/toolbars/ArrowScroll';"
-          echo "export * from './ui/views/toolbars/ToolbarGroupItem/ToolbarMultiToolItem/usePortalStyle';"
-        } | tee ketcher/packages/ketcher-react/dist/script/index.d.ts \
-              > ketcher/packages/ketcher-react/dist/cjs/script/index.d.ts
-
-      # ── Build Ketcher example app ────────────────────────────────────────
-      - npm --prefix ketcher run build:example
-
       # ── Package with electron-builder (directory mode) ───────────────────
+      # ketcher/example/dist/ is pre-built and included as a source — the
+      # Ketcher build toolchain uses an npm workspace lockfile structure that
+      # flatpak-node-generator cannot fully resolve. The Ketcher git source
+      # is declared below for transparency and audit purposes.
       - npx electron-builder --linux dir --publish never
 
       # ── Install ──────────────────────────────────────────────────────────
@@ -71,20 +53,33 @@ modules:
 
     sources:
       # ── For local testing: use the working tree directly ─────────────────
-      # For Flathub submission replace with the two git sources below.
+      # The working tree already contains ketcher/example/dist/ from a prior
+      # build; the Flatpak build-commands skip rebuilding Ketcher.
+      # For Flathub submission replace this block with the pinned git sources
+      # and ketcher-dist archive below.
       - type: dir
         path: ..
 
       # ── For Flathub submission: pin to a tagged release ──────────────────
+      # 1. Desktop app source
       # - type: git
       #   url: https://github.com/katalystnord/ketcher-desktop
-      #   tag: v3.17.0-rc.1
-      #   commit: 524f12d...   # fill in with: git rev-parse HEAD
+      #   tag: vX.Y.Z
+      #   commit: <git rev-parse HEAD>
+      #
+      # 2. Ketcher source (for audit — dist is pre-built, see below)
       # - type: git
       #   url: https://github.com/epam/ketcher
       #   dest: ketcher
       #   commit: 4d25340d33d3b59bb216916f9db067fc69b9ea3f
+      #
+      # 3. Pre-built Ketcher SPA (tar -czf ketcher-dist.tar.gz ketcher/example/dist)
+      #    Upload this as a release asset; fill in the sha256 with sha256sum.
+      # - type: archive
+      #   url: https://github.com/katalystnord/ketcher-desktop/releases/download/vX.Y.Z/ketcher-dist.tar.gz
+      #   sha256: <sha256sum ketcher-dist.tar.gz>
+      #   dest: ketcher/example
 
-      # ── Generated npm sources (produced by scripts/generate-flatpak-sources.sh)
+      # ── Generated npm sources (root package only) ─────────────────────────
+      # Produced by: bash scripts/generate-flatpak-sources.sh
       - generated-sources.json
-      - generated-sources-ketcher.json

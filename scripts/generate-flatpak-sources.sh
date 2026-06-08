@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Generates the pre-fetched npm source lists required for the Flatpak sandbox
-# build. Must be re-run whenever package-lock.json or ketcher/package-lock.json
-# changes. Output files are gitignored — do not commit them.
+# Generates the pre-fetched npm source list required for the Flatpak sandbox
+# build. Only the root package.json dependencies are processed — the Ketcher
+# SPA is included as a pre-built archive rather than built in the sandbox
+# (the Ketcher lockfile uses npm workspaces in a format flatpak-node-generator
+# cannot fully resolve). Must be re-run when package-lock.json changes.
 #
 # Prerequisites:
-#   pip install flatpak-node-generator
-#   (or: python3 -m pip install flatpak-node-generator)
+#   pip install flatpak-node-generator   (or pipx install flatpak-node-generator)
 #
 # Usage:
 #   bash scripts/generate-flatpak-sources.sh
@@ -21,17 +22,15 @@ if ! command -v flatpak-node-generator &>/dev/null; then
   exit 1
 fi
 
-echo "→ Generating sources for root package..."
+echo "→ Generating sources for root package (418 packages)..."
 flatpak-node-generator npm "$ROOT/package-lock.json" \
   --output "$OUT/generated-sources.json"
 
-echo "→ Generating sources for ketcher submodule..."
-flatpak-node-generator npm "$ROOT/ketcher/package-lock.json" \
-  --output "$OUT/generated-sources-ketcher.json"
-
 echo ""
 echo "✓ Sources written to flatpak/generated-sources.json"
-echo "  and flatpak/generated-sources-ketcher.json"
 echo ""
-echo "These files are gitignored. Include them in the Flathub submission"
-echo "directory (com.ketcher.desktop/) alongside the manifest."
+echo "For the Flathub submission you also need ketcher-dist.tar.gz:"
+echo "  tar -czf ketcher-dist.tar.gz -C ketcher/example dist"
+echo "  sha256sum ketcher-dist.tar.gz"
+echo "Upload the tarball as a release asset and fill in the URL + sha256"
+echo "in the commented-out sources block in flatpak/com.ketcher.desktop.yml."

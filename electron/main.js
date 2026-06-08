@@ -2,6 +2,12 @@ const { app, BrowserWindow, Menu, protocol, net, shell, dialog } = require('elec
 const path = require('path')
 const url = require('url')
 
+// Ubuntu 24.04 (and other distros with strict seccomp/userns policies) block
+// the unprivileged user-namespace creation that Chrome's sandbox relies on.
+// Disabling the sandbox here lets the app run without requiring a setuid
+// helper or a sysctl change from the user.
+app.commandLine.appendSwitch('no-sandbox')
+
 // Must be called before app is ready — makes app:// behave like https://
 // (standard URL resolution, secure context, WASM allowed, fetch API).
 protocol.registerSchemesAsPrivileged([{

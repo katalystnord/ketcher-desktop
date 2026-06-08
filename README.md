@@ -52,6 +52,11 @@ npm install
 npm start
 ```
 
+> **Already cloned without `--recurse-submodules`?** Run this once to populate the submodule:
+> ```bash
+> git submodule update --init --recursive
+> ```
+
 `npm start` builds the Ketcher SPA on first run if the `ketcher/example/dist/` output is missing, then opens the app via Electron directly from source.
 
 ---
@@ -102,7 +107,9 @@ ketcher-desktop/
 │   ├── update-ketcher.sh  # Pulls upstream Ketcher commits
 │   └── drive.mjs          # Playwright REPL driver for automated UI testing
 ├── build/
-│   └── icon.png       # App icon (512×512, transparent background)
+│   ├── icon.png       # App icon — Linux (448×448 RGBA PNG)
+│   ├── icon.ico       # App icon — Windows (multi-size ICO)
+│   └── icon.icns      # App icon — macOS (multi-size ICNS)
 ├── ketcher/           # Git submodule → github.com/epam/ketcher
 └── package.json       # electron-builder config
 ```

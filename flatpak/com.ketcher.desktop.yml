@@ -1,0 +1,90 @@
+app-id: com.ketcher.desktop
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '24.08'
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node24
+command: ketcher-desktop
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-download
+
+modules:
+  - name: ketcher-desktop
+    buildsystem: simple
+
+    build-options:
+      append-path: /usr/lib/sdk/node24/bin
+      env:
+        XDG_CACHE_HOME: /run/build/ketcher-desktop/cache
+        npm_config_cache: /run/build/ketcher-desktop/flatpak-node/npm-cache
+        npm_config_offline: 'true'
+
+    build-commands:
+      # ── Root dependencies ────────────────────────────────────────────────
+      - npm install --offline
+
+      # ── Ketcher submodule dependencies ───────────────────────────────────
+      - npm --prefix ketcher install --offline --legacy-peer-deps
+      - npm --prefix ketcher install react-refresh --offline --legacy-peer-deps
+
+      # ── Build Ketcher packages ───────────────────────────────────────────
+      - npm --prefix ketcher run build:packages
+
+      # ── ButtonsConfig shim ───────────────────────────────────────────────
+      # rollup-plugin-typescript2 skips emitting this file due to upstream TS
+      # errors; patch it so ButtonsConfig is re-exported correctly.
+      - |
+        {
+          echo "export type { Config, ButtonsConfig } from './builders/ketcher';"
+          echo "export * from './providers';"
+          echo "export * from './ui/views/toolbars/ArrowScroll';"
+          echo "export * from './ui/views/toolbars/ToolbarGroupItem/ToolbarMultiToolItem/usePortalStyle';"
+        } | tee ketcher/packages/ketcher-react/dist/script/index.d.ts \
+              > ketcher/packages/ketcher-react/dist/cjs/script/index.d.ts
+
+      # ── Build Ketcher example app ────────────────────────────────────────
+      - npm --prefix ketcher run build:example
+
+      # ── Package with electron-builder (directory mode) ───────────────────
+      - npx electron-builder --linux dir --publish never
+
+      # ── Install ──────────────────────────────────────────────────────────
+      - cp -r dist-electron/linux-unpacked /app/ketcher
+      - install -Dm755 flatpak/run.sh /app/bin/ketcher-desktop
+      - install -Dm644 flatpak/com.ketcher.desktop.desktop
+          /app/share/applications/com.ketcher.desktop.desktop
+      - install -Dm644 flatpak/icons/256x256.png
+          /app/share/icons/hicolor/256x256/apps/com.ketcher.desktop.png
+      - install -Dm644 flatpak/icons/512x512.png
+          /app/share/icons/hicolor/512x512/apps/com.ketcher.desktop.png
+      - install -Dm644 build/com.ketcher.desktop.metainfo.xml
+          /app/share/metainfo/com.ketcher.desktop.metainfo.xml
+
+    sources:
+      # ── For local testing: use the working tree directly ─────────────────
+      # For Flathub submission replace with the two git sources below.
+      - type: dir
+        path: ..
+
+      # ── For Flathub submission: pin to a tagged release ──────────────────
+      # - type: git
+      #   url: https://github.com/katalystnord/ketcher-desktop
+      #   tag: v3.17.0-rc.1
+      #   commit: 524f12d...   # fill in with: git rev-parse HEAD
+      # - type: git
+      #   url: https://github.com/epam/ketcher
+      #   dest: ketcher
+      #   commit: 4d25340d33d3b59bb216916f9db067fc69b9ea3f
+
+      # ── Generated npm sources (produced by scripts/generate-flatpak-sources.sh)
+      - generated-sources.json
+      - generated-sources-ketcher.json

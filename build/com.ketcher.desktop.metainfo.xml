@@ -3,12 +3,14 @@
   <id>com.ketcher.desktop</id>
 
   <name>Ketcher Desktop</name>
-  <summary>Chemical structure editor for desktop</summary>
+  <summary>Chemical structure editor — offline, WASM-based</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>Apache-2.0</project_license>
 
-  <developer_name>David — Katalyst Nord</developer_name>
+  <developer id="com.katalystnord">
+    <name>David — Katalyst Nord</name>
+  </developer>
 
   <description>
     <p>
@@ -31,11 +33,11 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">ketcher-desktop.desktop</launchable>
+  <launchable type="desktop-id">com.ketcher.desktop.desktop</launchable>
 
-  <url type="homepage">https://github.com/epam/ketcher</url>
-  <url type="bugtracker">https://github.com/YOUR_ORG/ketcher-desktop/issues</url>
-  <url type="vcs-browser">https://github.com/YOUR_ORG/ketcher-desktop</url>
+  <url type="homepage">https://github.com/katalystnord/ketcher-desktop</url>
+  <url type="bugtracker">https://github.com/katalystnord/ketcher-desktop/issues</url>
+  <url type="vcs-browser">https://github.com/katalystnord/ketcher-desktop</url>
 
   <keywords>
     <keyword>chemistry</keyword>
@@ -57,19 +59,20 @@
   <screenshots>
     <screenshot type="default">
       <caption>Ketcher Desktop — main editor window</caption>
-      <image>https://raw.githubusercontent.com/YOUR_ORG/ketcher-desktop/master/docs/screenshot.png</image>
+      <image>https://raw.githubusercontent.com/katalystnord/ketcher-desktop/master/docs/screenshot.png</image>
     </screenshot>
   </screenshots>
 
   <content_rating type="oars-1.1" />
 
   <releases>
-    <release version="1.0.0" date="2026-06-06">
+    <release version="3.17.0-rc.1" date="2026-06-08">
       <description>
         <p>Initial release of Ketcher Desktop.</p>
         <ul>
           <li>Standalone (offline) Ketcher build — no backend server required</li>
           <li>Linux AppImage and deb packages</li>
+          <li>Unsaved-changes prompt on close</li>
         </ul>
       </description>
     </release>

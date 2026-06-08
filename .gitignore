@@ -10,3 +10,4 @@ ketcher/demo/dist/
 .DS_Store
 *.log
 .claude/
+flatpak/generated-sources*.json

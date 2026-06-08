@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Ketcher Desktop
+Comment=Chemical structure editor — offline, WASM-based
+Exec=ketcher-desktop %U
+Terminal=false
+Type=Application
+Icon=com.ketcher.desktop
+StartupWMClass=Ketcher Desktop
+Categories=Science;Education;
+MimeType=chemical/x-mdl-molfile;chemical/x-mdl-rxnfile;chemical/x-smiles;chemical/x-cml;chemical/x-inchi;
+Keywords=chemistry;molecule;structure;editor;SMILES;molfile;reaction;InChI;CML;ketcher;
+StartupNotify=true

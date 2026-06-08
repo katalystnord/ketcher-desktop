@@ -42,7 +42,7 @@ Everything Ketcher offers, as a native desktop app:
 
 ```bash
 # Clone with the Ketcher submodule
-git clone --recurse-submodules https://github.com/your-org/ketcher-desktop.git
+git clone --recurse-submodules https://github.com/katalystnord/ketcher-desktop.git
 cd ketcher-desktop
 
 # Install Electron dependencies

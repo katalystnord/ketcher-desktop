@@ -14,33 +14,50 @@
   'use strict';
 
   async function svgBlobToHighResPng(svgBlob) {
-    const svgUrl = URL.createObjectURL(svgBlob);
+    const svgText = await svgBlob.text();
+
+    // Parse the SVG's intrinsic dimensions so we can preserve the aspect ratio.
+    const natW = parseFloat(svgText.match(/width="([^"]+)"/)?.[1]) || 400;
+    const natH = parseFloat(svgText.match(/height="([^"]+)"/)?.[1]) || 300;
+
+    const LONG_SIDE = 1600;
+    const scale = LONG_SIDE / Math.max(natW, natH);
+    const targetW = Math.round(natW * scale);
+    const targetH = Math.round(natH * scale);
+
+    // Override the SVG's width/height to the target pixel dimensions. Chromium
+    // rasterises an <img src=SVG> at its declared width/height, so setting these
+    // to the target size forces full-vector rendering at 1600 px — not a bitmap
+    // upscale of the tiny 87×76 default. Preserve (or add) a viewBox so the
+    // coordinate system is kept correct when the dimensions change.
+    let scaledSvg = svgText
+      .replace(/width="[^"]+"/, `width="${targetW}"`)
+      .replace(/height="[^"]+"/, `height="${targetH}"`);
+    if (!scaledSvg.includes('viewBox')) {
+      scaledSvg = scaledSvg.replace('<svg', `<svg viewBox="0 0 ${natW} ${natH}"`);
+    }
+
+    const scaledBlob = new Blob([scaledSvg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(scaledBlob);
     try {
       const img = await new Promise((resolve, reject) => {
         const i = new Image();
         i.onload = () => resolve(i);
         i.onerror = reject;
-        i.src = svgUrl;
+        i.src = url;
       });
 
-      const LONG_SIDE = 1600;
-      const natW = img.naturalWidth || 400;
-      const natH = img.naturalHeight || 300;
-      const scale = LONG_SIDE / Math.max(natW, natH);
-      const canvW = Math.round(natW * scale);
-      const canvH = Math.round(natH * scale);
-
       const canvas = document.createElement('canvas');
-      canvas.width = canvW;
-      canvas.height = canvH;
+      canvas.width = targetW;
+      canvas.height = targetH;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvW, canvH);
-      ctx.drawImage(img, 0, 0, canvW, canvH);
+      ctx.fillRect(0, 0, targetW, targetH);
+      ctx.drawImage(img, 0, 0, targetW, targetH);
 
       return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
     } finally {
-      URL.revokeObjectURL(svgUrl);
+      URL.revokeObjectURL(url);
     }
   }
 

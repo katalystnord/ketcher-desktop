@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, protocol, net, shell, dialog } = require('electron')
 const path = require('path')
 const url = require('url')
+const fs = require('fs')
 
 // Ubuntu 24.04 (and other distros with strict seccomp/userns policies) block
 // the unprivileged user-namespace creation that Chrome's sandbox relies on.
@@ -55,6 +56,15 @@ function createWindow() {
 
   // standalone mode: self-contained WASM build, no remote server needed
   win.loadURL('app://localhost/standalone/index.html')
+
+  // Augment clipboard copies with image/png so molecules paste as images in
+  // non-chemistry apps (Word, GIMP, etc.) while still carrying chemical types.
+  const augmentScript = fs.readFileSync(
+    path.join(__dirname, 'clipboard-augment.js'), 'utf8'
+  )
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.executeJavaScript(augmentScript).catch(() => {})
+  })
 
   // Open external links in the system browser instead of a new Electron window.
   win.webContents.setWindowOpenHandler(({ url: href }) => {

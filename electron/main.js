@@ -8,6 +8,9 @@ const fs = require('fs')
 // Disabling the sandbox here lets the app run without requiring a setuid
 // helper or a sysctl change from the user.
 app.commandLine.appendSwitch('no-sandbox')
+// Electron's GPU process can fail silently on some Linux GPU drivers,
+// leaving a blank window. Ketcher is SVG-based and doesn't need GPU acceleration.
+app.commandLine.appendSwitch('disable-gpu')
 
 // Must be called before app is ready — makes app:// behave like https://
 // (standard URL resolution, secure context, WASM allowed, fetch API).

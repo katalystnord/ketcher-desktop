@@ -117,12 +117,15 @@ function createWindow() {
   })
 }
 
-// Renderer sends a PNG ArrayBuffer; we write it via Electron's native clipboard
-// API which works correctly on all platforms including Linux X11.
+// Renderer sends a PNG ArrayBuffer after Ketcher's copyOrCutComplete event.
+// We read back the mol text Ketcher already placed on the clipboard, then
+// re-write with both image/png and text/plain so chemistry apps still get
+// the structure data while image-aware apps (Word, GIMP) get the PNG.
 ipcMain.handle('clipboard-write-image', (_event, pngArrayBuffer) => {
   try {
+    const molText = clipboard.readText()
     const img = nativeImage.createFromBuffer(Buffer.from(pngArrayBuffer))
-    clipboard.writeImage(img)
+    clipboard.write({ image: img, text: molText })
   } catch (e) {
     console.warn('[Ketcher Desktop] clipboard-write-image failed:', e.message)
   }

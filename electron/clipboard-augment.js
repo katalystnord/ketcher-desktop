@@ -1,37 +1,23 @@
 // Injected into the renderer main world on did-finish-load.
-// After Ketcher writes chemical types to the clipboard, also sends a PNG to
-// the main process via IPC. The main process writes it with Electron's native
-// clipboard API, which works on Linux X11 (navigator.clipboard.write silently
-// drops image/png when custom 'web ' MIME types are in the same ClipboardItem).
+//
+// Ketcher dispatches 'copyOrCutComplete' on window after every successful
+// clipboard write. We listen for it, generate a PNG of the current structure,
+// and hand it to the main process via IPC. The main process reads the mol text
+// that Ketcher already wrote (text/plain) then re-writes the clipboard with
+// both image/png and text/plain so non-chemistry apps can paste the image
+// while text-based tools still get the structure data.
 (function () {
   'use strict';
 
-  if (!navigator.clipboard?.write) return;
-
-  const origWrite = navigator.clipboard.write.bind(navigator.clipboard);
-
-  navigator.clipboard.write = async function (items) {
-    // Let Ketcher's write proceed normally first
-    await origWrite(items);
-
-    // Only augment chemistry copies
-    const hasMol = items.some((item) =>
-      item.types.includes('web chemical/x-mdl-molfile'),
-    );
-    if (!hasMol || typeof window.ketcher?.generateImage !== 'function') return;
+  window.addEventListener('copyOrCutComplete', async () => {
+    if (typeof window.ketcher?.generateImage !== 'function') return;
     if (typeof window.ketcherDesktop?.copyImageToClipboard !== 'function') return;
 
     try {
-      let molText = null;
-      for (const item of items) {
-        if (item.types.includes('web chemical/x-mdl-molfile')) {
-          molText = await (await item.getType('web chemical/x-mdl-molfile')).text();
-          break;
-        }
-      }
-      if (!molText?.trim()) return;
+      const mol = await window.ketcher.getMolfile();
+      if (!mol?.trim()) return;
 
-      const pngBlob = await window.ketcher.generateImage(molText, {
+      const pngBlob = await window.ketcher.generateImage(mol, {
         outputFormat: 'png',
       });
       const arrayBuffer = await pngBlob.arrayBuffer();
@@ -39,5 +25,5 @@
     } catch (e) {
       console.warn('[Ketcher Desktop] PNG clipboard generation failed:', e);
     }
-  };
+  });
 })();

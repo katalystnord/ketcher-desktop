@@ -33,7 +33,6 @@
 
       const pngBlob = await window.ketcher.generateImage(molText, {
         outputFormat: 'png',
-        backgroundColor: '#ffffff',
       });
       const arrayBuffer = await pngBlob.arrayBuffer();
       await window.ketcherDesktop.copyImageToClipboard(arrayBuffer);

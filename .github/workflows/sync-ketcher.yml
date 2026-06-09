@@ -1,0 +1,76 @@
+name: Sync Ketcher
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 06:00 UTC
+  workflow_dispatch:      # Allow manual trigger from Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout (with submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          # PAT required so the tag push triggers the build workflow
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Get latest stable Ketcher release
+        id: upstream
+        run: |
+          TAG=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/epam/ketcher/releases/latest \
+            | jq -r '.tag_name')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Latest upstream Ketcher: $TAG"
+
+      - name: Get current submodule tag
+        id: current
+        run: |
+          TAG=$(git -C ketcher describe --tags --exact-match 2>/dev/null \
+                || git -C ketcher rev-parse --short HEAD)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Current submodule: $TAG"
+
+      - name: Skip if already up to date
+        if: steps.upstream.outputs.tag == steps.current.outputs.tag
+        run: |
+          echo "Already at ${{ steps.upstream.outputs.tag }} — nothing to do."
+
+      - name: Update submodule to new release
+        if: steps.upstream.outputs.tag != steps.current.outputs.tag
+        run: |
+          git -C ketcher fetch --tags origin
+          git -C ketcher checkout ${{ steps.upstream.outputs.tag }}
+          git add ketcher
+
+      - name: Set up Node 24
+        if: steps.upstream.outputs.tag != steps.current.outputs.tag
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Sync desktop version from Ketcher
+        if: steps.upstream.outputs.tag != steps.current.outputs.tag
+        run: |
+          npm install --ignore-scripts
+          npm run sync-version
+          git add package.json
+
+      - name: Commit, tag, and push
+        if: steps.upstream.outputs.tag != steps.current.outputs.tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          KETCHER_TAG="${{ steps.upstream.outputs.tag }}"
+          DESKTOP_VERSION=$(node -p "require('./package.json').version")
+          git commit -m "chore: update Ketcher to ${KETCHER_TAG}"
+          git tag "v${DESKTOP_VERSION}"
+          git push origin master --follow-tags
+          echo "Pushed v${DESKTOP_VERSION} — build workflow will create the draft release."

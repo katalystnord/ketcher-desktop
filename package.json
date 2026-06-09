@@ -43,6 +43,7 @@
         ]
       }
     ],
+    "afterPack": "./scripts/appimage-wrap.cjs",
     "directories": {
       "output": "dist-electron"
     },

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, protocol, net, shell, dialog } = require('electron')
+const { app, BrowserWindow, Menu, protocol, net, shell, dialog, ipcMain, clipboard, nativeImage } = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require('fs')
@@ -116,6 +116,17 @@ function createWindow() {
     if (response === 0) win.destroy()
   })
 }
+
+// Renderer sends a PNG ArrayBuffer; we write it via Electron's native clipboard
+// API which works correctly on all platforms including Linux X11.
+ipcMain.handle('clipboard-write-image', (_event, pngArrayBuffer) => {
+  try {
+    const img = nativeImage.createFromBuffer(Buffer.from(pngArrayBuffer))
+    clipboard.writeImage(img)
+  } catch (e) {
+    console.warn('[Ketcher Desktop] clipboard-write-image failed:', e.message)
+  }
+})
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null)

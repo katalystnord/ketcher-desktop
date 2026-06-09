@@ -117,15 +117,17 @@ function createWindow() {
   })
 }
 
-// Renderer sends a PNG ArrayBuffer after Ketcher's copyOrCutComplete event.
-// We read back the mol text Ketcher already placed on the clipboard, then
-// re-write with both image/png and text/plain so chemistry apps still get
-// the structure data while image-aware apps (Word, GIMP) get the PNG.
-ipcMain.handle('clipboard-write-image', (_event, pngArrayBuffer) => {
+// Renderer sends a PNG ArrayBuffer + HTML string after Ketcher's copyOrCutComplete event.
+// We read back the mol text Ketcher already placed on the clipboard, then re-write with
+// image/png, text/html (sized for LibreOffice), and text/plain (mol data for chemistry apps).
+// The HTML carries the image at its natural CSS pixel size so LibreOffice pastes it at the
+// correct physical dimensions. Electron's nativeImage re-encodes PNG on the way out and
+// strips the pHYs DPI chunk, so the HTML path is the reliable sizing mechanism.
+ipcMain.handle('clipboard-write-image', (_event, pngArrayBuffer, html) => {
   try {
     const molText = clipboard.readText()
     const img = nativeImage.createFromBuffer(Buffer.from(pngArrayBuffer))
-    clipboard.write({ image: img, text: molText })
+    clipboard.write({ image: img, text: molText, html: html || '' })
   } catch (e) {
     console.warn('[Ketcher Desktop] clipboard-write-image failed:', e.message)
   }

@@ -117,17 +117,15 @@ function createWindow() {
   })
 }
 
-// Renderer sends a PNG ArrayBuffer + HTML string after Ketcher's copyOrCutComplete event.
-// We read back the mol text Ketcher already placed on the clipboard, then re-write with
-// image/png, text/html (sized for LibreOffice), and text/plain (mol data for chemistry apps).
-// The HTML carries the image at its natural CSS pixel size so LibreOffice pastes it at the
-// correct physical dimensions. Electron's nativeImage re-encodes PNG on the way out and
-// strips the pHYs DPI chunk, so the HTML path is the reliable sizing mechanism.
-ipcMain.handle('clipboard-write-image', (_event, pngArrayBuffer, html) => {
+// Renderer sends a PNG ArrayBuffer (with pHYs DPI chunk) after Ketcher's copyOrCutComplete.
+// We write it directly with clipboard.writeBuffer so the raw bytes reach the clipboard
+// unchanged. nativeImage.createFromBuffer + clipboard.write({image}) would re-encode the
+// PNG from pixels, stripping the pHYs chunk and making LibreOffice/Word ignore DPI metadata.
+// writeBuffer bypasses that re-encoding: apps requesting image/png get the exact bytes we
+// produced, including the pHYs chunk that encodes 300 DPI → ~6.8 cm paste size.
+ipcMain.handle('clipboard-write-image', (_event, pngArrayBuffer) => {
   try {
-    const molText = clipboard.readText()
-    const img = nativeImage.createFromBuffer(Buffer.from(pngArrayBuffer))
-    clipboard.write({ image: img, text: molText, html: html || '' })
+    clipboard.writeBuffer('image/png', Buffer.from(pngArrayBuffer))
   } catch (e) {
     console.warn('[Ketcher Desktop] clipboard-write-image failed:', e.message)
   }

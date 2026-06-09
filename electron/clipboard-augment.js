@@ -62,14 +62,15 @@
     const natW = parseFloat(svgText.match(/width="([^"]+)"/)?.[1]) || 400;
     const natH = parseFloat(svgText.match(/height="([^"]+)"/)?.[1]) || 300;
 
-    const LONG_SIDE = 1600;
+    // 800 px on the longest side gives sharp quality from the vector SVG while
+    // keeping the clipboard payload small. At 300 DPI the image pastes at
+    // 800 / 300 ≈ 2.67 inches (≈ 6.8 cm) in LibreOffice / Word — a typical
+    // chemistry-document size. Change LONG_SIDE / DPI here to taste.
+    const LONG_SIDE = 800;
+    const DPI = 300;
     const scale = LONG_SIDE / Math.max(natW, natH);
     const targetW = Math.round(natW * scale);
     const targetH = Math.round(natH * scale);
-
-    // DPI = scale × 96 CSS px/inch → the pasted image occupies the same
-    // physical area as the molecule does on-screen at 96 DPI.
-    const dpi = Math.round(scale * 96);
 
     // Override the SVG's width/height to the target pixel dimensions. Chromium
     // rasterises an <img src=SVG> at its declared width/height, so setting these
@@ -102,20 +103,7 @@
       ctx.drawImage(img, 0, 0, targetW, targetH);
 
       const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-      const pngBuffer = injectPngDpi(await pngBlob.arrayBuffer(), dpi);
-
-      // Build an HTML fragment that embeds the PNG at its natural CSS size (natW × natH
-      // CSS pixels). LibreOffice Writer reads the HTML clipboard format and respects
-      // these width/height attributes — Electron's nativeImage re-encodes the PNG when
-      // writing to the clipboard and strips the pHYs DPI chunk, so the HTML path is the
-      // only reliable way to tell LibreOffice the intended physical size.
-      const base64 = btoa(
-        Array.from(new Uint8Array(pngBuffer), (b) => String.fromCharCode(b)).join('')
-      );
-      const html = `<html><body><img src="data:image/png;base64,${base64}" ` +
-        `width="${natW}" height="${natH}"></body></html>`;
-
-      return { png: pngBuffer, html };
+      return injectPngDpi(await pngBlob.arrayBuffer(), DPI);
     } finally {
       URL.revokeObjectURL(url);
     }
@@ -130,8 +118,8 @@
       if (!mol?.trim()) return;
 
       const svgBlob = await window.ketcher.generateImage(mol, { outputFormat: 'svg' });
-      const { png, html } = await svgBlobToHighResPng(svgBlob);
-      await window.ketcherDesktop.copyImageToClipboard(png, html);
+      const pngBuffer = await svgBlobToHighResPng(svgBlob);
+      await window.ketcherDesktop.copyImageToClipboard(pngBuffer);
     } catch (e) {
       console.warn('[Ketcher Desktop] PNG clipboard generation failed:', e);
     }

@@ -39,10 +39,16 @@
         "from": "ketcher/example/dist",
         "to": "ketcher-dist",
         "filter": [
-          "**/*"
+          "**/*",
+          "!remote/**",
+          "!static/**",
+          "!standalone/static/js/popup.*",
+          "!standalone/static/js/duo.*",
+          "!standalone/static/js/closable.*"
         ]
       }
     ],
+    "electronLanguages": ["en-US"],
     "afterPack": "./scripts/appimage-wrap.cjs",
     "directories": {
       "output": "dist-electron"

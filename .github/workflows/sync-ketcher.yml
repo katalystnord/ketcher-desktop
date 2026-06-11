@@ -70,7 +70,21 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           KETCHER_TAG="${{ steps.upstream.outputs.tag }}"
           DESKTOP_VERSION=$(node -p "require('./package.json').version")
-          git commit -m "chore: update Ketcher to ${KETCHER_TAG}"
-          git tag "v${DESKTOP_VERSION}"
-          git push origin master --follow-tags
-          echo "Pushed v${DESKTOP_VERSION} — build workflow will create the draft release."
+          DESKTOP_TAG="v${DESKTOP_VERSION}"
+
+          # Only commit if there are staged changes (avoids empty-commit error on re-runs)
+          if git diff --cached --quiet; then
+            echo "Nothing staged — submodule+version already at ${KETCHER_TAG}, skipping commit."
+          else
+            git commit -m "chore: update Ketcher to ${KETCHER_TAG}"
+          fi
+
+          # Only push the tag if it doesn't already exist remotely
+          if git ls-remote --tags origin "refs/tags/${DESKTOP_TAG}" | grep -q "${DESKTOP_TAG}"; then
+            echo "Tag ${DESKTOP_TAG} already exists — pushing master only."
+            git push origin master
+          else
+            git tag "${DESKTOP_TAG}"
+            git push origin master --follow-tags
+            echo "Pushed ${DESKTOP_TAG} — build workflow will create the draft release."
+          fi

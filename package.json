@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "electron": "^35.0.0",
-    "electron-builder": "^25.0.0",
+    "electron-builder": "^26.15.3",
     "playwright-core": "^1.61.1"
   },
   "build": {
@@ -70,9 +70,11 @@
       ],
       "category": "Science;Education",
       "desktop": {
-        "Keywords": "chemistry;molecule;structure;editor;SMILES;molfile;reaction;InChI;CML;ketcher;",
-        "MimeType": "chemical/x-mdl-molfile;chemical/x-mdl-rxnfile;chemical/x-mdl-sdfile;chemical/x-smiles;chemical/x-cml;chemical/x-inchi;",
-        "StartupNotify": "true"
+        "entry": {
+          "Keywords": "chemistry;molecule;structure;editor;SMILES;molfile;reaction;InChI;CML;ketcher;",
+          "MimeType": "chemical/x-mdl-molfile;chemical/x-mdl-rxnfile;chemical/x-mdl-sdfile;chemical/x-smiles;chemical/x-cml;chemical/x-inchi;",
+          "StartupNotify": "true"
+        }
       },
       "extraFiles": [
         {

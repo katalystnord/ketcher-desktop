@@ -7,6 +7,12 @@ Ketcher Desktop uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [3.18.0-rc.3] — 2026-07-06
+
+### Added
+
+- SMILES as a fourth copy-format option, alongside PNG/SVG/Molfile — compact and widely recognized outside chemistry-aware editors (database search boxes, chat, spreadsheets), at the cost of 2D layout.
+
 ## [3.18.0-rc.2] — 2026-07-06
 
 ### Added

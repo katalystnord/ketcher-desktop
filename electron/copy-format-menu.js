@@ -3,11 +3,11 @@
 // at copy time.
 //
 // A small floating dropdown that picks which single format Ctrl+C produces:
-// PNG (default), SVG, or Molfile. Exclusive on purpose — writing several
-// formats to the clipboard at once is unreliable, since not every app picks
-// the richest available one (some grab plain text over an image when both
-// are present, e.g. pasting a raw Molfile into a document instead of a
-// picture).
+// PNG (default), SVG, Molfile, or SMILES. Exclusive on purpose — writing
+// several formats to the clipboard at once is unreliable, since not every
+// app picks the richest available one (some grab plain text over an image
+// when both are present, e.g. pasting a raw Molfile into a document instead
+// of a picture).
 (function () {
   'use strict';
 
@@ -17,6 +17,7 @@
     { id: 'png', label: 'PNG (image)' },
     { id: 'svg', label: 'SVG (vector image)' },
     { id: 'molfile', label: 'Molfile (chemical text)' },
+    { id: 'smiles', label: 'SMILES (chemical text)' },
   ];
   let current = 'png';
 

@@ -120,12 +120,12 @@ function createWindow() {
   })
 }
 
-// Renderer sends { format: 'png'|'svg'|'molfile', data } after Ketcher's
-// copyOrCutComplete, carrying exactly the one format currently selected in
-// the copy-format dropdown. Only one format is ever written to the clipboard
-// at a time — writing several at once is unreliable, since not every app
-// picks the richest available format (some apps grab plain text over an
-// image when both are present).
+// Renderer sends { format: 'png'|'svg'|'molfile'|'smiles', data } after
+// Ketcher's copyOrCutComplete, carrying exactly the one format currently
+// selected in the copy-format dropdown. Only one format is ever written to
+// the clipboard at a time — writing several at once is unreliable, since not
+// every app picks the richest available format (some apps grab plain text
+// over an image when both are present).
 //
 // PNG uses clipboard.writeBuffer directly so the raw bytes (with the pHYs DPI
 // chunk already baked in by png-export.js) reach the clipboard unchanged.
@@ -138,7 +138,7 @@ ipcMain.handle('clipboard-write', (_event, { format, data }) => {
       clipboard.writeBuffer('image/png', Buffer.from(data))
     } else if (format === 'svg') {
       clipboard.writeBuffer('image/svg+xml', Buffer.from(data, 'utf8'))
-    } else if (format === 'molfile') {
+    } else if (format === 'molfile' || format === 'smiles') {
       clipboard.writeText(data)
     }
   } catch (e) {

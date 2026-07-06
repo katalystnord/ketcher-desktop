@@ -4,9 +4,9 @@
 // Ketcher dispatches 'copyOrCutComplete' on window after every successful
 // clipboard write. We listen for it and overwrite the clipboard with
 // whichever single format is currently selected in the copy-format dropdown
-// (PNG by default, or SVG / Molfile) — only one format is ever written, since
-// not every paste target picks the richest available one when several are
-// present (some apps grab plain text over an image).
+// (PNG by default, or SVG / Molfile / SMILES) — only one format is ever
+// written, since not every paste target picks the richest available one when
+// several are present (some apps grab plain text over an image).
 (function () {
   'use strict';
 
@@ -28,6 +28,12 @@
 
       if (format === 'molfile') {
         await window.ketcherDesktop.writeClipboard('molfile', mol);
+        return;
+      }
+
+      if (format === 'smiles') {
+        const smiles = await window.ketcher.getSmiles();
+        await window.ketcherDesktop.writeClipboard('smiles', smiles);
         return;
       }
 

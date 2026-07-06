@@ -18,7 +18,7 @@
     "sync-version": "node -e \"const v=require('./ketcher/packages/ketcher-react/package.json').version; require('child_process').execSync('npm pkg set version='+v,{stdio:'inherit'}); console.log('→ Version synced to '+v);\""
   },
   "devDependencies": {
-    "electron": "^35.0.0",
+    "electron": "^43.0.0",
     "electron-builder": "^26.15.3",
     "playwright-core": "^1.61.1"
   },

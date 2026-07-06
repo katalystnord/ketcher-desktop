@@ -10,4 +10,5 @@ ketcher/demo/dist/
 .DS_Store
 *.log
 .claude/
+memory/
 flatpak/generated-sources*.json

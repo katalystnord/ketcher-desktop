@@ -60,13 +60,16 @@ function createWindow() {
   // standalone mode: self-contained WASM build, no remote server needed
   win.loadURL('app://localhost/standalone/index.html')
 
-  // Augment clipboard copies with image/png so molecules paste as images in
-  // non-chemistry apps (Word, GIMP, etc.) while still carrying chemical types.
-  const augmentScript = fs.readFileSync(
-    path.join(__dirname, 'clipboard-augment.js'), 'utf8'
-  )
+  // Augment clipboard copies with a chosen format (PNG/SVG/Molfile) so
+  // molecules paste usefully in non-chemistry apps too. png-export.js and
+  // copy-format-menu.js must run first — they define the shared PNG rasterizer
+  // and the format-selector dropdown that clipboard-augment.js builds on.
+  const injectedScripts = ['png-export.js', 'copy-format-menu.js', 'clipboard-augment.js']
+    .map((file) => fs.readFileSync(path.join(__dirname, file), 'utf8'))
   win.webContents.on('did-finish-load', () => {
-    win.webContents.executeJavaScript(augmentScript).catch(() => {})
+    for (const script of injectedScripts) {
+      win.webContents.executeJavaScript(script).catch(() => {})
+    }
   })
 
   // Open external links in the system browser instead of a new Electron window.
@@ -117,17 +120,29 @@ function createWindow() {
   })
 }
 
-// Renderer sends a PNG ArrayBuffer (with pHYs DPI chunk) after Ketcher's copyOrCutComplete.
-// We write it directly with clipboard.writeBuffer so the raw bytes reach the clipboard
-// unchanged. nativeImage.createFromBuffer + clipboard.write({image}) would re-encode the
-// PNG from pixels, stripping the pHYs chunk and making LibreOffice/Word ignore DPI metadata.
-// writeBuffer bypasses that re-encoding: apps requesting image/png get the exact bytes we
-// produced, including the pHYs chunk that encodes 300 DPI → ~6.8 cm paste size.
-ipcMain.handle('clipboard-write-image', (_event, pngArrayBuffer) => {
+// Renderer sends { format: 'png'|'svg'|'molfile', data } after Ketcher's
+// copyOrCutComplete, carrying exactly the one format currently selected in
+// the copy-format dropdown. Only one format is ever written to the clipboard
+// at a time — writing several at once is unreliable, since not every app
+// picks the richest available format (some apps grab plain text over an
+// image when both are present).
+//
+// PNG uses clipboard.writeBuffer directly so the raw bytes (with the pHYs DPI
+// chunk already baked in by png-export.js) reach the clipboard unchanged.
+// nativeImage.createFromBuffer + clipboard.write({image}) would re-encode the
+// PNG from pixels, stripping the pHYs chunk and making LibreOffice/Word
+// ignore the DPI metadata that controls paste size.
+ipcMain.handle('clipboard-write', (_event, { format, data }) => {
   try {
-    clipboard.writeBuffer('image/png', Buffer.from(pngArrayBuffer))
+    if (format === 'png') {
+      clipboard.writeBuffer('image/png', Buffer.from(data))
+    } else if (format === 'svg') {
+      clipboard.writeBuffer('image/svg+xml', Buffer.from(data, 'utf8'))
+    } else if (format === 'molfile') {
+      clipboard.writeText(data)
+    }
   } catch (e) {
-    console.warn('[Ketcher Desktop] clipboard-write-image failed:', e.message)
+    console.warn('[Ketcher Desktop] clipboard-write failed:', e.message)
   }
 })
 

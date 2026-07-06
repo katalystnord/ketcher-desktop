@@ -7,6 +7,17 @@ Ketcher Desktop uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [3.18.0-rc.2] — 2026-07-06
+
+### Added
+
+- Copy-format dropdown (bottom-right of the canvas): choose whether Ctrl+C copies the molecule as PNG (default), SVG, or a raw Molfile. Only one format is ever written to the clipboard at a time — some apps grab plain text over an image when both are present, so writing several formats at once isn't reliable.
+- SVG copies are re-declared in physical `cm` units (geometry untouched) so vector apps like Inkscape and LibreOffice Draw import them at a real, consistent size instead of Ketcher's tiny native ~87×76 unitless canvas.
+
+### Changed
+
+- Default copy-to-clipboard PNG size reduced from 800px/300 DPI (~6.8cm) to 400px/300 DPI (~3.4cm) — a more compact inline size for notes and documents.
+
 ## [1.0.0] — 2026-06-06
 
 Initial release.

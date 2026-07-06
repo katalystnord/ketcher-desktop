@@ -20,7 +20,7 @@
   "devDependencies": {
     "electron": "^35.0.0",
     "electron-builder": "^25.0.0",
-    "playwright-core": "^1.60.0"
+    "playwright-core": "^1.61.1"
   },
   "build": {
     "appId": "com.ketcher.desktop",

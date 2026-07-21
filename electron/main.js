@@ -8,9 +8,13 @@ const fs = require('fs')
 // Disabling the sandbox here lets the app run without requiring a setuid
 // helper or a sysctl change from the user.
 app.commandLine.appendSwitch('no-sandbox')
-// Electron's GPU process can fail silently on some Linux GPU drivers,
-// leaving a blank window. Ketcher is SVG-based and doesn't need GPU acceleration.
-app.commandLine.appendSwitch('disable-gpu')
+// Electron's GPU process can fail silently on some Linux GPU drivers, leaving
+// a blank window. Fully disabling the GPU used to be the fix, but that also
+// kills WebGL — breaking the Miew 3D viewer. Force software-rendered WebGL
+// (SwiftShader) instead: sidesteps the flaky native driver while keeping 3D
+// visualization working.
+app.commandLine.appendSwitch('use-gl', 'swiftshader')
+app.commandLine.appendSwitch('enable-unsafe-swiftshader')
 
 // Must be called before app is ready — makes app:// behave like https://
 // (standard URL resolution, secure context, WASM allowed, fetch API).

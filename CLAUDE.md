@@ -18,7 +18,7 @@ Chemists in David's network wanted a native chemical structure editor they could
 
 ## Key features
 
-- Everything Ketcher offers out of the box: 2D structure drawing, 3D visualization, template library, stereochemistry, undo/redo, OCR, macromolecules editing
+- Everything Ketcher offers out of the box: 2D structure drawing, 3D visualization, template library, stereochemistry, undo/redo, macromolecules editing
 - Runs fully offline — WASM-based standalone mode, no Indigo backend needed
 - Formats: MDL Molfile, RXN, InChI, ChemAxon Extended SMILES, CML
 - Correct-resolution clipboard copy: molecules paste into LibreOffice/Word at print quality (300 DPI PNG with embedded resolution metadata)

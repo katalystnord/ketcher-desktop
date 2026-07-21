@@ -20,7 +20,6 @@ Everything Ketcher offers, as a native desktop app:
 - Undo/redo history
 - Load and save in MDL Molfile, RXN, InChI, ChemAxon Extended SMILES, and CML formats
 - Zoom, hotkeys, cut/copy/paste
-- OCR — recognize structures from image files
 - Copy/paste between chemical editors
 - Macromolecules editing mode (switch via the top toolbar)
 - Runs fully offline — no Indigo backend needed

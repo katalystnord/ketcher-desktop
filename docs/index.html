@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ketcher Desktop — offline chemical structure editor</title>
+<meta name="description" content="A free, open-source native desktop app for drawing chemical structures — wraps EPAM's Ketcher editor in Electron. Runs fully offline, no server, no browser.">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Palette lifted directly from Ketcher's own UI theme (ketcher-react/src/style/variables.less,
+     demo/src/constants/defaultTheme.ts) so this page reads as the same product family. */
+  :root {
+    --bg: #fafcfc;
+    --surface: #ffffff;
+    --text: #1c1d1f;
+    --text-dim: #585858;
+    --border: #e1e5ea;
+    --accent: #167782;
+    --accent-strong: #005662;
+    --accent-soft: #eff2f5;
+    --accent-grad-1: #3bc2d7;
+    --accent-grad-2: #1d9db1;
+    --code-bg: #f5f6f7;
+    --shadow: 0 1px 2px rgba(0,60,66,0.04), 0 8px 24px rgba(0,60,66,0.07);
+  }
+  :root[data-theme="dark"] {
+    --bg: #14191a;
+    --surface: #1b2224;
+    --text: #eaf2f2;
+    --text-dim: #9fb1b3;
+    --border: #263133;
+    --accent: #3bc2d7;
+    --accent-strong: #6fd8e6;
+    --accent-soft: rgba(59,194,215,0.14);
+    --accent-grad-1: #3bc2d7;
+    --accent-grad-2: #1d9db1;
+    --code-bg: #202829;
+    --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 30px rgba(0,0,0,0.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14191a;
+      --surface: #1b2224;
+      --text: #eaf2f2;
+      --text-dim: #9fb1b3;
+      --border: #263133;
+      --accent: #3bc2d7;
+      --accent-strong: #6fd8e6;
+      --accent-soft: rgba(59,194,215,0.14);
+      --accent-grad-1: #3bc2d7;
+      --accent-grad-2: #1d9db1;
+      --code-bg: #202829;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 30px rgba(0,0,0,0.35);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  a { color: var(--accent-strong); }
+
+  /* Nav */
+  header.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1.05rem; }
+  .brand img { width: 28px; height: 28px; border-radius: 6px; }
+  .nav-links { display: flex; gap: 28px; font-size: 0.95rem; }
+  .nav-links a { color: var(--text-dim); text-decoration: none; }
+  .nav-links a:hover { color: var(--text); }
+
+  /* Hero */
+  .hero { padding: 56px 0 40px; text-align: center; position: relative; }
+  .hero-bg {
+    position: absolute;
+    top: -40px; left: 50%;
+    transform: translateX(-50%);
+    width: 1100px; max-width: none;
+    height: 480px;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  :root[data-theme="dark"] .hero-bg { opacity: 0.35; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .hero-bg { opacity: 0.35; }
+  }
+  .hero > *:not(.hero-bg) { position: relative; z-index: 1; }
+  .hero img.logo {
+    width: 88px; height: 88px; border-radius: 20px; box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 4.5vw, 3.1rem);
+    line-height: 1.1;
+    margin: 0 0 16px;
+    letter-spacing: -0.02em;
+  }
+  .tagline {
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 auto 32px;
+  }
+  .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.98rem;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.08s ease, box-shadow 0.15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-grad-1), var(--accent-grad-2));
+    color: #ffffff;
+    box-shadow: var(--shadow);
+  }
+  .btn-primary:hover { filter: brightness(0.94); }
+  .btn-secondary { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent-strong); }
+  .free-note { font-size: 0.88rem; color: var(--text-dim); }
+
+  .shot-frame {
+    margin: 48px auto 0;
+    max-width: 880px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .shot-frame img { display: block; width: 100%; height: auto; }
+
+  /* Sections */
+  section { padding: 64px 0; }
+  section + section { border-top: 1px solid var(--border); }
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+    text-align: center;
+  }
+  .section-sub {
+    text-align: center;
+    color: var(--text-dim);
+    max-width: 560px;
+    margin: 0 auto 40px;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 20px;
+  }
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 20px;
+  }
+  .feature .icon {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    border-radius: 8px;
+    margin-bottom: 14px;
+  }
+  .feature .icon svg { width: 19px; height: 19px; }
+  .feature h3 { margin: 0 0 6px; font-size: 1.02rem; }
+  .feature p { margin: 0; color: var(--text-dim); font-size: 0.92rem; }
+
+  /* Gallery */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+  }
+  .gallery-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 10px 16px;
+    box-shadow: var(--shadow);
+  }
+  .gallery-item .shot {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .gallery-item img { display: block; width: 100%; height: auto; }
+  .gallery-item h3 { margin: 0 6px 4px; font-size: 0.98rem; }
+  .gallery-item p { margin: 0 6px; color: var(--text-dim); font-size: 0.88rem; }
+
+  /* Downloads */
+  .downloads {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .dl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .dl-card .plat-icon {
+    width: 56px; height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dl-card .plat-icon svg { width: 30px; height: 30px; }
+  .dl-card h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .dl-card p { margin: 0 0 16px; color: var(--text-dim); font-size: 0.85rem; }
+  .dl-card .btn { width: 100%; justify-content: center; padding: 10px 16px; font-size: 0.9rem; }
+  .dl-all { text-align: center; margin-top: 24px; font-size: 0.92rem; color: var(--text-dim); }
+
+  /* Open source / credit */
+  .credit-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 32px;
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .credit-box .ketcher-mark { display: block; margin: 0 auto 18px; }
+  .credit-box p { color: var(--text-dim); margin: 0 0 10px; }
+  .credit-box p:last-child { margin-bottom: 0; }
+  .credit-box strong { color: var(--text); }
+
+  footer {
+    padding: 40px 24px 56px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.88rem;
+  }
+  footer a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 2px; }
+  footer .footer-links { margin-top: 8px; }
+  footer .footer-links a { margin: 0 10px; }
+
+  @media (max-width: 560px) {
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="brand">
+    <img src="assets/icon.png" alt="">
+    Ketcher Desktop
+  </div>
+  <nav class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#download">Download</a>
+    <a href="https://github.com/katalystnord/ketcher-desktop">GitHub</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <section class="hero" style="padding-top:8px;">
+    <svg class="hero-bg" viewBox="0 0 1100 480" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#3bc2d7"/>
+          <stop offset="1" stop-color="#1d9db1"/>
+        </linearGradient>
+        <radialGradient id="heroFade" cx="50%" cy="35%" r="65%">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="heroMask">
+          <rect width="1100" height="480" fill="url(#heroFade)"/>
+        </mask>
+      </defs>
+      <g mask="url(#heroMask)" fill="none" stroke="url(#heroGrad)" stroke-width="1.4">
+        <!-- stylized bond lattice: hexagon rings joined by bonds, echoing a 2D structure drawing -->
+        <path d="M120 90 L175 60 L230 90 L230 150 L175 180 L120 150 Z"/>
+        <path d="M230 90 L285 60 L340 90 L340 150 L285 180 L230 150"/>
+        <path d="M340 150 L395 180 L395 240"/>
+        <path d="M175 180 L175 240 L230 270 L230 330 L175 360"/>
+        <path d="M760 70 L815 40 L870 70 L870 130 L815 160 L760 130 Z"/>
+        <path d="M870 130 L925 160 L980 130 L980 70 L925 40"/>
+        <path d="M815 160 L815 220 L870 250"/>
+        <path d="M700 260 L755 290 L755 350 L700 380 L645 350 L645 290 Z"/>
+        <path d="M755 290 L810 260 L865 290"/>
+        <path d="M480 300 L535 330 L535 390"/>
+        <path d="M535 330 L590 300 L645 330"/>
+        <g stroke="none" fill="url(#heroGrad)">
+          <circle cx="120" cy="90" r="3.5"/>
+          <circle cx="230" cy="90" r="3.5"/>
+          <circle cx="340" cy="90" r="3.5"/>
+          <circle cx="395" cy="240" r="3.5"/>
+          <circle cx="175" cy="360" r="3.5"/>
+          <circle cx="760" cy="70" r="3.5"/>
+          <circle cx="980" cy="70" r="3.5"/>
+          <circle cx="870" cy="250" r="3.5"/>
+          <circle cx="700" cy="380" r="3.5"/>
+          <circle cx="645" cy="290" r="3.5"/>
+          <circle cx="535" cy="390" r="3.5"/>
+          <circle cx="590" cy="300" r="3.5"/>
+        </g>
+      </g>
+    </svg>
+    <h1>A chemical structure editor,<br>right on your desktop.</h1>
+    <p class="tagline">
+      Ketcher Desktop wraps EPAM's open-source Ketcher editor in a native app.
+      Draw molecules and reactions fully offline — no browser, no server, no setup.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/katalystnord/ketcher-desktop/releases">⬇ Download for free</a>
+      <a class="btn btn-secondary" href="https://github.com/katalystnord/ketcher-desktop">★ Star on GitHub</a>
+    </div>
+    <p class="free-note">Free &amp; open source, Apache 2.0 — for Linux, Windows, and macOS</p>
+
+    <div class="shot-frame">
+      <img src="screenshot.png" alt="Ketcher Desktop main window showing the 2D structure editor with a periodic table sidebar">
+    </div>
+  </section>
+
+  <section id="features">
+    <h2>Everything Ketcher offers, installed like an app</h2>
+    <p class="section-sub">
+      All the capability of the web-based Ketcher editor, packaged so chemists who don't want
+      to run a browser tab or a backend server can just double-click and draw.
+    </p>
+    <div class="features">
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div>
+        <h3>2D structure drawing</h3>
+        <p>Fast, standards-compliant drawing of molecules and reactions.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
+        <h3>3D visualization</h3>
+        <p>Built-in Miew viewer for inspecting structures in three dimensions.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1"/></svg></div>
+        <h3>Template library</h3>
+        <p>Built-in and custom templates, Generic groups, and query features.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="6" cy="18" r="1.7" fill="currentColor"/><path d="M7 17V7l10 8z" fill="currentColor"/><circle cx="17" cy="6" r="1.7" fill="currentColor"/></svg></div>
+        <h3>Stereochemistry</h3>
+        <p>Full support during editing, loading, and saving structures.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="12" height="16" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/></svg></div>
+        <h3>Print-quality copy</h3>
+        <p>Copy a structure and paste it into Word or LibreOffice at true 300 DPI.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 005.65 0l3-3a4 4 0 10-5.65-5.65l-1 1"/><path d="M14 10a4 4 0 00-5.65 0l-3 3a4 4 0 105.65 5.65l1-1"/></svg></div>
+        <h3>Macromolecules mode</h3>
+        <p>Switch to peptide, nucleotide, and CHEM/sequence editing from the toolbar.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></div>
+        <h3>Every common format</h3>
+        <p>MDL Molfile, RXN, InChI, ChemAxon Extended SMILES, CML, and SMILES.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
+        <h3>Fully offline</h3>
+        <p>Runs on a bundled WASM engine — no Indigo backend, no internet required.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery">
+    <h2>See it in action</h2>
+    <p class="section-sub">A few corners of the app, straight from a real running build.</p>
+    <div class="gallery">
+      <div class="gallery-item">
+        <div class="shot"><img src="assets/shots/drawing.png" alt="Drawing a substituted phenol in the 2D editor" loading="lazy"></div>
+        <h3>2D structure drawing</h3>
+        <p>Fast, precise bond and atom tools on a clean canvas.</p>
+      </div>
+      <div class="gallery-item">
+        <div class="shot"><img src="assets/shots/templates.png" alt="The Structure Library showing a-D-Sugars templates" loading="lazy"></div>
+        <h3>Template library</h3>
+        <p>Hundreds of built-in templates, searchable by name or element.</p>
+      </div>
+      <div class="gallery-item">
+        <div class="shot"><img src="assets/shots/stereochemistry.png" alt="A molecule with wedge and dash stereo bonds and an ABS label" loading="lazy"></div>
+        <h3>Stereochemistry</h3>
+        <p>Wedge/dash bonds and absolute-configuration labeling, done right.</p>
+      </div>
+      <div class="gallery-item">
+        <div class="shot"><img src="assets/shots/3d-view.png" alt="The Miew 3D viewer showing the same molecule in three dimensions" loading="lazy"></div>
+        <h3>3D visualization</h3>
+        <p>Flip any structure into the built-in Miew 3D viewer.</p>
+      </div>
+      <div class="gallery-item">
+        <div class="shot"><img src="assets/shots/clipboard.png" alt="A molecule pasted into LibreOffice Writer at crisp print quality" loading="lazy"></div>
+        <h3>Print-quality copy</h3>
+        <p>Copy in Ketcher Desktop, paste straight into LibreOffice or Word.</p>
+      </div>
+      <div class="gallery-item">
+        <div class="shot"><img src="assets/shots/formats.png" alt="The Save Structure dialog showing available file formats" loading="lazy"></div>
+        <h3>Every common format</h3>
+        <p>Molfile, SDF, RDF, InChI, SMILES, Ket, and more — export straight from the save dialog.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <h2>Download</h2>
+    <p class="section-sub">Pick your platform. Builds are currently unsigned, so expect a SmartScreen or Gatekeeper warning on first launch.</p>
+    <div class="downloads">
+      <div class="dl-card">
+        <div class="plat-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <ellipse cx="12" cy="14.5" rx="6" ry="7"/>
+            <circle cx="12" cy="6" r="4"/>
+            <ellipse cx="12" cy="15.5" rx="3" ry="5" fill="var(--accent-soft)"/>
+            <circle cx="10.3" cy="5.5" r="0.7" fill="var(--accent-soft)"/>
+            <circle cx="13.7" cy="5.5" r="0.7" fill="var(--accent-soft)"/>
+            <ellipse cx="9" cy="21.3" rx="1.9" ry="0.9"/>
+            <ellipse cx="15" cy="21.3" rx="1.9" ry="0.9"/>
+          </svg>
+        </div>
+        <h3>Linux</h3>
+        <p>AppImage or .deb package</p>
+        <a class="btn btn-primary" href="https://github.com/katalystnord/ketcher-desktop/releases">Download</a>
+      </div>
+      <div class="dl-card">
+        <div class="plat-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="2" y="2" width="9" height="9" rx="1"/>
+            <rect x="13" y="2" width="9" height="9" rx="1"/>
+            <rect x="2" y="13" width="9" height="9" rx="1"/>
+            <rect x="13" y="13" width="9" height="9" rx="1"/>
+          </svg>
+        </div>
+        <h3>Windows</h3>
+        <p>NSIS installer (.exe)</p>
+        <a class="btn btn-primary" href="https://github.com/katalystnord/ketcher-desktop/releases">Download</a>
+      </div>
+      <div class="dl-card">
+        <div class="plat-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12.9 7.4c-.9 0-1.9.5-2.5.5-.6 0-1.5-.5-2.4-.5-1.9 0-3.9 1.6-3.9 4.9 0 2.1.8 4.4 1.8 5.9.9 1.3 1.7 2.4 2.9 2.4 1.1 0 1.6-.7 2.9-.7 1.3 0 1.7.7 2.9.7 1.2 0 2-1.1 2.7-2.2.5-.8.8-1.3 1.1-2.1-2.8-1.1-3.3-4.9-.5-6.6-.8-1.1-2.1-1.7-3.1-1.7z"/>
+            <path d="M12.7 6.3c.5-.6.9-1.5.8-2.3-.7 0-1.6.5-2.1 1.1-.5.5-.9 1.4-.8 2.2.8.1 1.6-.4 2.1-1z"/>
+          </svg>
+        </div>
+        <h3>macOS</h3>
+        <p>DMG disk image</p>
+        <a class="btn btn-primary" href="https://github.com/katalystnord/ketcher-desktop/releases">Download</a>
+      </div>
+    </div>
+    <p class="dl-all">All installers are published on the <a href="https://github.com/katalystnord/ketcher-desktop/releases">GitHub Releases page</a>, including current pre-releases with the latest features.</p>
+  </section>
+
+  <section>
+    <h2>Free, open, and built on Ketcher</h2>
+    <div class="credit-box">
+      <img class="ketcher-mark" src="assets/ketcher-mark.svg" alt="Ketcher logo" width="34" height="37">
+      <p>
+        Ketcher Desktop is a desktop molecular editor, lovingly built on top of
+        <strong>Ketcher</strong>, the excellent open-source chemical structure editor
+        built and maintained by the team at <strong>EPAM Systems</strong>.
+      </p>
+      <p>
+        All of the actual chemistry — drawing, rendering, stereochemistry, macromolecules —
+        is Ketcher. This project just makes it installable, offline, and clipboard-friendly
+        for chemists who'd rather not run a browser tab.
+      </p>
+      <p>
+        Thank you to the EPAM Ketcher team for building and open-sourcing it under Apache 2.0.
+        Bug reports, ideas, and contributions are always welcome.
+      </p>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div>Ketcher Desktop is free and open source under the Apache 2.0 License.</div>
+  <div class="footer-links">
+    <a href="https://github.com/katalystnord/ketcher-desktop">GitHub</a>
+    <a href="https://github.com/epam/ketcher">Ketcher (upstream)</a>
+    <a href="https://github.com/katalystnord/ketcher-desktop/issues">Report an issue</a>
+  </div>
+  <div style="margin-top:10px;">Built by <a href="https://katalystnord.com">David, Katalyst Nord</a></div>
+</footer>
+
+</body>
+</html>

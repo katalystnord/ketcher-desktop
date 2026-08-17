@@ -91,6 +91,20 @@ npm run update-ketcher
 
 Review the diff, then commit the submodule bump and rebuild. If the upstream changes break the `ButtonsConfig` shim or the `build:example` step, see gotcha #2 above.
 
+## Versioning
+
+**Ketcher Desktop carries the exact version of the Ketcher release it wraps.** If the submodule is at Ketcher `v3.19.0-rc.1`, `package.json` says `3.19.0-rc.1` and the release tag is `v3.19.0-rc.1`. Nothing else. The version number answers one question — *which Ketcher is inside?* — and users should be able to read it that way without a translation table.
+
+The version is never edited by hand. It is derived from the submodule:
+
+```bash
+npm run sync-version    # reads ketcher/packages/ketcher-react/package.json
+```
+
+`npm run update-ketcher` does this for you, and the daily Sync Ketcher workflow does it in CI. `npm run check-version` asserts the two agree and runs automatically before `build`, `dist`, and `pack`, so a drifted version cannot ship.
+
+**Desktop-only changes do not get their own version.** A clipboard fix or a menu change with no upstream bump behind it waits and ships with the next Ketcher sync. This is the deliberate trade-off: appending a wrapper-local suffix (`3.18.0-rc.4` on top of Ketcher `3.18.0-rc.1`) is what broke the correspondence in the first place, and the confusion cost more than shipping a few days later. If a desktop-only fix is urgent enough to need a release of its own, raise it as a decision rather than reaching for a suffix.
+
 ## Testing
 
 There is no automated test suite for the Electron wrapper itself. To verify a change manually, use the Playwright driver:

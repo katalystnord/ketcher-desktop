@@ -5,7 +5,26 @@ All notable changes to Ketcher Desktop will be documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Ketcher Desktop uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+Version numbers match the bundled Ketcher release exactly — see [CONTRIBUTING.md → Versioning](CONTRIBUTING.md#versioning).
+
 ---
+
+## [3.19.0-rc.1] — 2026-08-17
+
+### Changed
+
+- Ketcher updated to **v3.19.0-rc.1** (from an untagged master commit ~110 commits past v3.18.0-rc.1). Upstream highlights: Indigo WASM engine bumped to v1.47.0-rc.1; 3D mode now preserves static objects and reaction molecules; Isotopes added to Check Structure; keyboard shortcuts change bond type while hovering; undo restored in atom mapping; a KET file with four S-groups no longer loses the last one; library search accepts three-letter amino-acid codes.
+- Desktop version realigned to the upstream number. The wrapper had drifted to `3.18.0-rc.4` while the bundled Ketcher was still 3.18.0-rc.1, so the version no longer told you what was inside. From here the two always match, enforced by `npm run check-version` in the build.
+
+### Added
+
+- `scripts/check-version.cjs` — fails the build if `package.json` and the bundled `ketcher-react` disagree on the version.
+
+### Included from the unreleased 3.18.0-rc.4 line
+
+- Restored the WebGL/3D viewer by switching to SwiftShader rather than disabling the GPU outright.
+- GitHub Pages landing page.
+- Removed OCR from the feature lists — it was never actually supported.
 
 ## [3.18.0-rc.3] — 2026-07-06
 

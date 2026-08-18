@@ -23,6 +23,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Build (${{ matrix.name }})
 
+    env:
+      # ketcher-standalone bundles the Indigo modules, and rollup holds the lot in
+      # memory. On the macOS runner (arm64, ~7 GB) Node's default heap ceiling is
+      # not enough from Indigo v1.47.0-rc.1 onwards, and the build dies with
+      # "FATAL ERROR: Ineffective mark-compacts near heap limit". Kept below the
+      # runner's RAM so we do not trade V8's OOM for the kernel's. Harmless on the
+      # roomier Linux and Windows runners.
+      NODE_OPTIONS: --max-old-space-size=5120
+
     steps:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'

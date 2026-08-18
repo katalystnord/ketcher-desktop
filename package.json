@@ -16,7 +16,9 @@
     "dist": "npm run check-version && npm run build:ketcher && electron-builder --publish never",
     "pack": "npm run check-version && npm run build:ketcher && electron-builder --dir",
     "update-ketcher": "bash scripts/update-ketcher.sh",
-    "sync-version": "node -e \"const v=require('./ketcher/packages/ketcher-react/package.json').version; require('child_process').execSync('npm pkg set version='+v,{stdio:'inherit'}); console.log('→ Version synced to '+v);\""
+    "sync-version": "node -e \"const v=require('./ketcher/packages/ketcher-react/package.json').version; require('child_process').execSync('npm pkg set version='+v,{stdio:'inherit'}); console.log('→ Version synced to '+v);\"",
+    "test": "node --test tests/*.test.mjs",
+    "test:ketcher": "cd ketcher && npm run test:unit --workspace=packages/ketcher-core --workspace=packages/ketcher-react --workspace=packages/ketcher-standalone --workspace=packages/ketcher-macromolecules"
   },
   "devDependencies": {
     "electron": "^43.0.0",

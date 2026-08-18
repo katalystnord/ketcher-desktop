@@ -1,0 +1,75 @@
+name: Tests
+
+on:
+  push:
+    branches: [master, 'release/**']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  wrapper:
+    name: Wrapper scripts
+    runs-on: ubuntu-latest
+    steps:
+      # No submodule, no npm install: these tests run the scripts in scripts/
+      # against throwaway fixture trees and use Node's built-in test runner, so
+      # they need neither the Ketcher checkout nor any dependency.
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Run wrapper tests
+        run: npm test
+
+  ketcher:
+    name: Ketcher unit tests
+    runs-on: ubuntu-latest
+    # Upstream's own suite. It matters most when the bundled Ketcher needs our
+    # build patches (the 3.17.x line disables rollup-plugin-typescript2's
+    # typecheck), since that is exactly the safety net those patches remove.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Cache Ketcher node_modules
+        uses: actions/cache@v4
+        with:
+          path: ketcher/node_modules
+          key: ${{ runner.os }}-ketcher-${{ hashFiles('ketcher/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-ketcher-
+
+      - name: Install Ketcher dependencies
+        # `npm ci` from inside the submodule, matching scripts/build-ketcher.sh:
+        # it installs exactly the committed lockfile and never rewrites it, and
+        # `npm --prefix ... ci` resolves workspaces against the wrong directory.
+        run: cd ketcher && npm ci --legacy-peer-deps
+
+      - name: Apply the build patches
+        # So the tests exercise the same tree the release is built from. Each
+        # script no-ops on Ketcher versions that do not need it.
+        run: |
+          node scripts/fix-ketcher-typescript-resolution.cjs
+          node scripts/fix-ketcher-tsconfig.cjs
+          node scripts/fix-ketcher-jsx-namespace.cjs
+          node scripts/fix-ketcher-rpt2-check.cjs
+
+      - name: Run Ketcher unit tests
+        # test:unit (jest) only, not upstream's full `test` script. That script
+        # also runs prettier, stylelint, eslint, circular-dependency and tsc
+        # gates over upstream's own tree, which fail here for reasons that say
+        # nothing about whether the app works:
+        #   * prettier rejects tsconfig.build.json after fix-ketcher-tsconfig.cjs
+        #     rewrites it via JSON.stringify;
+        #   * test:types is the very check the 3.17.x line cannot pass, which is
+        #     why fix-ketcher-rpt2-check.cjs exists.
+        # Those are upstream's gates on upstream's CI. What we need to know is
+        # whether the library still behaves.
+        run: npm run test:ketcher

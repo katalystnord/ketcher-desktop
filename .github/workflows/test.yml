@@ -61,6 +61,14 @@ jobs:
           node scripts/fix-ketcher-jsx-namespace.cjs
           node scripts/fix-ketcher-rpt2-check.cjs
 
+      - name: Build Ketcher packages
+        # ketcher-react and ketcher-macromolecules import ketcher-core, which
+        # resolves to its built dist/, so the packages have to exist before jest
+        # runs. Without this every suite fails to load with
+        # "Cannot find module 'ketcher-core'". build:packages only — the example
+        # app is not needed for unit tests.
+        run: cd ketcher && npm run build:packages
+
       - name: Run Ketcher unit tests
         # test:unit (jest) only, not upstream's full `test` script. That script
         # also runs prettier, stylelint, eslint, circular-dependency and tsc

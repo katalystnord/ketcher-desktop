@@ -9,22 +9,46 @@ Version numbers match the bundled Ketcher release exactly — see [CONTRIBUTING.
 
 ---
 
-## [3.19.0-rc.1] — 2026-08-17
+## [3.17.2] — 2026-08-18
+
+**First stable release of Ketcher Desktop.** Every release before this one was a release candidate.
+
+### Security
+
+- Ketcher updated to **v3.17.2**, which carries the fix for an XSS vulnerability: opening a KET file containing a crafted monomer label could execute script (upstream [#10482](https://github.com/epam/ketcher/pull/10491)). A bundled dependency vulnerability was fixed in the same change. This is the reason to move to a stable line now rather than later.
 
 ### Changed
 
-- Ketcher updated to **v3.19.0-rc.1** (from an untagged master commit ~110 commits past v3.18.0-rc.1). Upstream highlights: Indigo WASM engine bumped to v1.47.0-rc.1; 3D mode now preserves static objects and reaction molecules; Isotopes added to Check Structure; keyboard shortcuts change bond type while hovering; undo restored in atom mapping; a KET file with four S-groups no longer loses the last one; library search accepts three-letter amino-acid codes.
-- Desktop version realigned to the upstream number. The wrapper had drifted to `3.18.0-rc.4` while the bundled Ketcher was still 3.18.0-rc.1, so the version no longer told you what was inside. From here the two always match, enforced by `npm run check-version` in the build.
+- Indigo cheminformatics engine updated to **v1.45.1**.
+
+### Fixed
+
+- WebGL/3D viewer restored, by switching to SwiftShader instead of disabling the GPU outright. 3D view was broken in the 3.17.0-rc and 3.18.0-rc builds on machines without usable GPU acceleration.
 
 ### Added
 
-- `scripts/check-version.cjs` — fails the build if `package.json` and the bundled `ketcher-react` disagree on the version.
-
-### Included from the unreleased 3.18.0-rc.4 line
-
-- Restored the WebGL/3D viewer by switching to SwiftShader rather than disabling the GPU outright.
+- `scripts/check-version.cjs` — fails the build if `package.json` and the bundled `ketcher-react` disagree on the version, so the version can never drift from what is actually inside.
 - GitHub Pages landing page.
-- Removed OCR from the feature lists — it was never actually supported.
+- `scripts/fix-ketcher-jsx-namespace.cjs` — Ketcher 3.17.x pins `@types/react` 19, which removed the global `JSX` namespace, but its own source still writes `JSX.Element`, so the tag does not compile as published. Upstream fixed this after the 3.17 line and never backported it; this applies their own type-only shim when the bundled Ketcher lacks it, and skips versions that already ship it.
+- `scripts/fix-ketcher-rpt2-check.cjs` — disables `rollup-plugin-typescript2`'s typecheck for the `ketcher-react` and `ketcher-macromolecules` library builds. Ketcher 3.17.x does not typecheck against its own pinned toolchain, and every compiler version in range only trades one upstream type error for another. Upstream never fixed the 3.17 line; they moved the package off this plugin entirely in 3.19. The build already worked around it by hand-writing `index.d.ts` "due to upstream TS errors in the package", so this makes the situation explicit rather than a moving target. Diagnostics only — the emitted bundle is unchanged, and the build stays on upstream's own pinned TypeScript. No-op on Ketcher 3.19+.
+
+### Changed (build)
+
+- `scripts/build-ketcher.sh` now installs the Ketcher submodule with `npm ci` instead of `npm install`. `npm install` re-resolved against `package.json` and could silently truncate upstream's lockfile — dropping whole workspaces, after which the build failed on a missing dev tool (`shx: not found`, `cross-env: not found`) that looked like an upstream breakage. `npm ci` installs exactly the committed lockfile and never rewrites it, so builds are reproducible and that failure mode is gone.
+- `scripts/fix-ketcher-tsconfig.cjs` now picks `moduleResolution` based on the TypeScript the bundled Ketcher pins — `bundler` on TypeScript 5+, `node` on the TypeScript 4.7 that 3.17.x uses, where `bundler` is rejected outright.
+- The example-app build now runs with `DISABLE_ESLINT_PLUGIN=true`. create-react-app lints as part of `build`, and upstream's config loads `eslint-plugin-jest`, which reads the installed *jest* version. Ketcher's lockfile records jest as a peer dependency, and `--legacy-peer-deps` does not install peers, so the lint step aborted the build with "Unable to detect Jest version". Packaging a release is not the place to lint upstream's example app, and the emitted bundle is identical either way.
+
+### Removed
+
+- OCR from the feature lists in the README and elsewhere — it was never actually supported.
+
+### A note on the version number
+
+If you are running the `3.18.0-rc.3` pre-release, this stable build carries an *older* Ketcher. That is deliberate, and it is not a rollback of desktop work.
+
+Ketcher Desktop takes the exact version of the Ketcher it wraps ([CONTRIBUTING.md → Versioning](CONTRIBUTING.md#versioning)). Upstream never shipped a stable `3.18.0` — that line stopped at `3.18.0-rc.3` and the release candidates moved on to `3.19.0-rc.1`. Upstream's newest *stable* is `3.17.2`, tagged 5 August, which is actually **newer** than the `3.19.0-rc.1` tag (3 August). So `3.17.2` is the most recent Ketcher that upstream considers finished, and it is the only honest number for a first stable release.
+
+All the desktop-side work from the unreleased `3.18.0-rc.4` line — the 3D fix above included — ships here. If you want the newest upstream features and can accept release-candidate quality, the `3.19.0-rc.1` pre-release is published alongside this one.
 
 ## [3.18.0-rc.3] — 2026-07-06
 

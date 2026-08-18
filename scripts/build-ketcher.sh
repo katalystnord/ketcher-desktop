@@ -48,10 +48,22 @@ fi
 # Install Ketcher dependencies and build
 # ---------------------------------------------------------------------------
 echo "→ Installing Ketcher dependencies..."
-npm --prefix "$KETCHER_DIR" install --legacy-peer-deps
-# react-refresh is a peer dep that --legacy-peer-deps omits; needed by the build
-npm --prefix "$KETCHER_DIR" install react-refresh --legacy-peer-deps 2>/dev/null || true
-# Two build-pipeline fixes, done as standalone .cjs scripts (not inline `node -e`
+# `npm ci`, not `npm install`. ci installs exactly what upstream's committed
+# lockfile resolves and never rewrites it; it also wipes node_modules itself.
+# `npm install` re-resolves against package.json, and a node_modules tree left
+# over from a different Ketcher version has repeatedly made it truncate
+# ketcher/package-lock.json — dropping whole workspaces, after which the build
+# dies on a missing dev tool (`shx: not found`, `cross-env: not found`) that
+# looks like an upstream breakage but is not. ci makes that class impossible.
+# Run from inside the submodule, not via `npm --prefix`: with --prefix, npm reads
+# package.json from the prefix but still resolves workspaces against the current
+# directory, so `ci` aborts with "Missing: ketcher-core@... from lock file" for
+# every workspace.
+( cd "$KETCHER_DIR" && npm ci --legacy-peer-deps )
+# react-refresh is a peer dep that --legacy-peer-deps omits; needed by the build.
+# --no-save so this can never rewrite the lockfile we just installed from.
+( cd "$KETCHER_DIR" && npm install react-refresh --no-save --legacy-peer-deps ) 2>/dev/null || true
+# Four build-pipeline fixes, done as standalone .cjs scripts (not inline `node -e`
 # with a bash-interpolated path) — Git Bash's automatic POSIX->Windows path
 # conversion only rewrites literal command-line arguments, not paths embedded
 # inside a script string, so an inline `node -e '...' "$KETCHER_DIR" ...'` leaks
@@ -60,6 +72,8 @@ npm --prefix "$KETCHER_DIR" install react-refresh --legacy-peer-deps 2>/dev/null
 # what it fixes and why.
 node "$SCRIPT_DIR/fix-ketcher-typescript-resolution.cjs"
 node "$SCRIPT_DIR/fix-ketcher-tsconfig.cjs"
+node "$SCRIPT_DIR/fix-ketcher-jsx-namespace.cjs"
+node "$SCRIPT_DIR/fix-ketcher-rpt2-check.cjs"
 
 echo "→ Building Ketcher packages (this takes a few minutes)..."
 npm --prefix "$KETCHER_DIR" run build:packages
@@ -74,7 +88,14 @@ echo "$SCRIPT_DTS" > "$KETCHER_DIR/packages/ketcher-react/dist/script/index.d.ts
 echo "$SCRIPT_DTS" > "$KETCHER_DIR/packages/ketcher-react/dist/cjs/script/index.d.ts"
 
 echo "→ Building Ketcher example app..."
-npm --prefix "$KETCHER_DIR" run build:example
+# DISABLE_ESLINT_PLUGIN: create-react-app runs ESLint as part of `build`, and
+# upstream's config loads eslint-plugin-jest, which resolves the *jest* package to
+# read its version. Ketcher's lockfile records jest as a peer dependency
+# ("peer": true), and --legacy-peer-deps does not install peers — so the lint step
+# dies with "Unable to detect Jest version" before any compilation output is
+# written. We are packaging a release artifact, not linting upstream's example
+# app, and the emitted bundle is identical either way.
+DISABLE_ESLINT_PLUGIN=true npm --prefix "$KETCHER_DIR" run build:example
 
 echo ""
 echo "✓ Ketcher built successfully → ketcher/example/dist/"

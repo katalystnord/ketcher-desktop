@@ -9,6 +9,12 @@ Version numbers match the bundled Ketcher release exactly — see [CONTRIBUTING.
 
 ---
 
+## [3.20.0-rc.1] — 2026-09-14
+
+### Changed
+
+- Ketcher updated to **v3.20.0-rc.1** (491 commits past v3.19.0-rc.1). Notable fixes: microstructures in Macro mode now save as MOL V3000 instead of V2000; clipboard paste no longer chokes on molfiles ending in a few trailing carriage returns; explicit carbon labels export correctly to SVG; several "Cannot read properties of null/undefined" crashes fixed (import, event bus, reaction-plus tool, RNA builder); triple bonds no longer draw at odd angles when clicking a template or chain atom; a stuck abbreviation-lookup popup from repeated "0" presses is fixed; the atom custom-query field now has a max length instead of crashing on oversized input. A large share of the remaining commits are internal refactors, lint cleanups, and macromolecule/RNA-builder polish (attachment points, ambiguous-monomer styling, sequence editing).
+
 ## [3.19.0-rc.1] — 2026-08-18
 
 ### Changed

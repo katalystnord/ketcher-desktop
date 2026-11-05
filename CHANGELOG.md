@@ -9,6 +9,12 @@ Version numbers match the bundled Ketcher release exactly — see [CONTRIBUTING.
 
 ---
 
+## [3.21.0-rc.1] - 2026-11-05
+
+### Changed
+
+- Ketcher updated to **v3.21.0-rc.1** (150 commits past v3.20.0-rc.1). Notable changes: structures saved as MOL V3000 that previously failed to load now open; the standalone (offline) build now ships its Indigo web worker correctly; existing elements on the canvas no longer shift when adding more from a file; render options are kept when settings are applied; text, image, arrow, and plus tools switch back to the Select tool after placing; a new Chinese interface localization; invalid monomer library items are skipped instead of breaking the library. Molecules-tab settings got typo and tooltip fixes. Much of the rest is internal refactoring, lint cleanups, and macromolecule/sequence-editing polish (antisense duplex editing, monomer creation wizard, snake-mode layout).
+
 ## [3.20.0-rc.1] — 2026-09-14
 
 ### Changed
